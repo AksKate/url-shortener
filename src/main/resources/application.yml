@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: url-shortner
+server:
+  port: 8080
+
+default:
+  short-url: "https://short/en/"
+  cache:
+    timeout: 60000
