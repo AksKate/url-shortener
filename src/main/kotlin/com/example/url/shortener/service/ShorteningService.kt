@@ -1,7 +1,7 @@
 package com.example.url.shortener.service
 
 import com.example.url.shortener.dao.CacheImpl
-import com.example.url.shortener.model.NotFoundException
+import com.example.url.shortener.model.error.NotFoundException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import kotlin.random.Random
@@ -48,6 +48,6 @@ class ShorteningServiceImpl(val cache: CacheImpl<String, String>): ShorteningSer
 
     override fun retrieveOriginalUrlFromShorten(shortUrl: String): String {
         val keyword = shortUrl.removeRange(0, shortUrl.lastIndexOf("/") + 1)
-        return cache.get(keyword) ?: throw NotFoundException("Url by short url $shortUrl is not found.")
+        return cache.get(keyword) ?: throw NotFoundException(keyword, "Url by short url $shortUrl is not found.")
     }
 }
