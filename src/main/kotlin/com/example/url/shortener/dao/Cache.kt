@@ -24,6 +24,9 @@ class CacheImpl<K, V> : Cache<K,V> {
     @Value("\${default.cache.timeout:60000}")
     private val cacheTimeout: Long? = null
 
+    @Value("\${default.cache.max-size:100}")
+    private val cacheMaxSize: Int? = null
+
     private val cacheMap = mutableMapOf<K, CacheValue<V>>()
 
     override fun containsKey(key: K): Boolean {
@@ -35,6 +38,9 @@ class CacheImpl<K, V> : Cache<K,V> {
     }
 
     override fun put(key: K, value: V) {
+        if (cacheMap.entries.size >= cacheMaxSize!!) {
+            cleanExpired()
+        }
         cacheMap.put(key, createCacheValue(value))
     }
 
@@ -53,17 +59,26 @@ class CacheImpl<K, V> : Cache<K,V> {
     }
 
     override fun cleanExpired() {
-        getExpiredKeys().forEach { key ->
+        val expiredKeys = getExpiredKeys()
+        expiredKeys.takeIf { !it.isNullOrEmpty() }?.forEach { key ->
             cacheMap.remove(key)
+        } ?: kotlin.run {
+            getLatestKey()?.let {
+                cacheMap.remove(it)
+            }
         }
     }
 
-    private fun getExpiredKeys(): List<K> {
-        return cacheMap.filter { isExpired(it.value) }.map { it.key }
-    }
+    private fun getExpiredKeys(): List<K> =
+        cacheMap.filter { isExpired(it.value) }.map { it.key }
+
 
     private fun isExpired(value: CacheValue<V>): Boolean =
         LocalDateTime.now().isAfter(value.createdAt.plus(cacheTimeout!!, ChronoUnit.MILLIS))
+
+    private fun getLatestKey(): K? {
+        return cacheMap.entries.minByOrNull { it.value.createdAt }?.key
+    }
 
     override fun clearAll() {
         cacheMap.clear()

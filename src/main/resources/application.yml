@@ -8,3 +8,4 @@ default:
   short-url: "https://short/en/"
   cache:
     timeout: 60000
+    max-size: 100
